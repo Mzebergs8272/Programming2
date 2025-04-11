@@ -2,8 +2,10 @@
 //import com.opencsv.CSVWriter;
 
 import javax.swing.*;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
-
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -55,7 +57,11 @@ class InventoryManagerApp {
     private String windowTitle;
     public int navBarWidth;
 
-    public ArrayList<Record> records;
+    public ArrayList<Record> displayedRecords;
+    public ArrayList<SalesRecord> salesRecords;
+    public ArrayList<InventoryRecord> inventoryRecords;
+
+    public DefaultTableModel tableModel;
 
     InventoryManagerApp() {
         window = new JFrame(windowTitle);
@@ -130,19 +136,52 @@ class InventoryManagerApp {
 
         // create 2d data array from data in csv
         String[][] data = {
-                {"1", "Cheese", "description"},
-                {"2", "Cheese", "description"}
+                {"Product ID", "Product Name", "Description", "Cost", "Quantity", "Total Value"},
+                {"1", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+                {"2", "Cheese", "description", "", "", ""},
+
         };
-        String[] columnNames = {"Item ID", "Item Name", "Description"};
-        JTable tblRecords = new JTable(data, columnNames);
+        String[] columnNames = {"Item ID", "Item Name", "Description", "Cost", "Quantity", "Total Value"};
 
-
-
-
-        tblRecords.setPreferredSize(new Dimension(width - navBarWidth - 50, height-100));
-
+        tableModel = new DefaultTableModel(data, columnNames);
+        JTable tblRecords = new JTable(tableModel);
+        tblRecords.setRowHeight(30);
+        tblRecords.setPreferredSize(new Dimension(1425, height));
         tableContainer.add(tblRecords);
-
         window.add(tableContainer);
     }
 
@@ -150,11 +189,26 @@ class InventoryManagerApp {
 
     }
 
-    void addRecord() {}
-    void removeRecord() {}
+    void addRecord() {
+        // creates modal window
+        // text fields to specify ID, Name, Description, Cost, Quantity, Total Value
+        // access tableModel to add row
+        tableModel.addRow(new String[]{"3", "Cheese", "description", "", "", ""});
+    }
+    void removeRecord() {
+        // creates modal window
+        // textfield to specify list of rows to remove
+        // textfield to specify a range of rows to remove
+        // access tableModel to remove rows
+    }
 
     // changes ArrayList records to sales records from csv
-    void loadSalesPage() {}
+    // changes text on buttons for corresponding page
+    void loadSalesPage() {
+        // use setDateVector to display different table
+        // tableModel.setDataVector(new String[][] {}, new String[]{});
+
+    }
     // changes records list to inventory records from csv
     // changes display of buttons and nav bar
     void loadInventoryPage() {}
