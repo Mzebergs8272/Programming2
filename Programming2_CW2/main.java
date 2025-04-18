@@ -9,9 +9,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.*;
+import java.util.concurrent.Flow;
 
 // TODO: prevent user from changing pages while any dialog box is open
 
@@ -39,10 +42,11 @@ class InventoryManagerApp {
 
     public DefaultTableModel tableModel;
 
-
     public JPanel containerTableEdits;
     public JPanel containerNavBar;
     public JPanel containerTable;
+
+
 
     InventoryManagerApp() {
         window = new JFrame(windowTitle);
@@ -124,7 +128,18 @@ class InventoryManagerApp {
 
         btnAddRecord.addActionListener(e -> addRecord());
         btnRemoveRecord.addActionListener(e -> drawWinRemoveRecord());
-        txtSearch.addActionListener(e -> searchTable());
+
+        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                searchTable(txtSearch.getText());
+            }
+            public void removeUpdate(DocumentEvent e) {
+                searchTable(txtSearch.getText());
+            }
+            public void changedUpdate(DocumentEvent e) {
+                searchTable(txtSearch.getText());
+            }
+        });
 
         containerTableEdits.add(btnAddRecord);
         containerTableEdits.add(btnRemoveRecord);
@@ -133,22 +148,69 @@ class InventoryManagerApp {
     }
 
     void drawTable() {
-        containerTable = new JPanel();
+        containerTable = new JPanel(new FlowLayout());
         containerTable.setPreferredSize(new Dimension(width - navBarWidth, height - 225));
         containerTable.setBackground(Color.green);
 
         tableModel = new DefaultTableModel();
         JTable tblRecords = new JTable(tableModel);
         tblRecords.setRowHeight(30);
+        tblRecords.setAutoCreateRowSorter(true);
 
         JScrollPane scrollPane = new JScrollPane(tblRecords);
         scrollPane.setPreferredSize(new Dimension(1425, height - 225));
+
         containerTable.add(scrollPane);
 
         window.add(containerTable);
     }
 
-    void searchTable() {
+    void searchTable(String query) {
+
+        if (query == null || query.isEmpty()) {
+            loadInventoryRecords();
+            System.out.println("nfewpifewof");
+            return;
+        }
+
+        ArrayList<ArrayList<String>> result = new ArrayList<>();
+        int row = 0;
+        for (Vector<String> record : tableModel.getDataVector()) {
+            boolean match = false;
+            ArrayList<String> resultRecord = new ArrayList<>();
+            for (String column : record) {
+                System.out.println(column + " " + query);
+                if (column != null && column.equalsIgnoreCase(query)) {
+                    match = true;
+                }
+
+            }
+
+            if (match) result.add(resultRecord);
+            row++;
+        }
+
+        if (!result.isEmpty()) {
+
+            System.out.println(result.getFirst().get(0).toString());
+            String[] columnNames = new String[tableModel.getColumnCount()];
+            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                columnNames[i] = tableModel.getColumnName(i);
+            }
+
+            String[][] arrResult = new String[result.size()][result.getFirst().size()];
+            for (int i = 0; i < result.size(); i++) {
+                for (int j = 0; j < result.getFirst().size(); j++) {
+                    arrResult[i][j] = result.get(i).get(j);
+                }
+            }
+
+            System.out.println(arrResult[0][0]);
+            tableModel.setDataVector(arrResult, columnNames);
+        }
+        else {
+            loadInventoryRecords();
+        }
 
     }
 
@@ -165,8 +227,8 @@ class InventoryManagerApp {
 
         winRemoveRecord.addWindowListener(new WindowAdapter() {
             public void windowClosed(WindowEvent e) {
-                window.setEnabled(true);
-                window.toFront();
+            window.setEnabled(true);
+            window.toFront();
             }
         });
 
@@ -227,8 +289,8 @@ class InventoryManagerApp {
 
         winAddSale.addWindowListener(new WindowAdapter() {
             public void windowClosed(WindowEvent e) {
-                window.setEnabled(true);
-                window.toFront();
+            window.setEnabled(true);
+            window.toFront();
             }
         });
 
@@ -344,6 +406,42 @@ class InventoryManagerApp {
         }
     }
 
+    void loadInventoryRecords() {
+        try {
+            String content = new String(Files.readAllBytes(Paths.get("src/Programming2_CW2/StockRecords.json")));
+            JSONObject json = new JSONObject(content);
+
+            String[][] data = new String[json.length()][6];
+            int i = 0;
+            for (Object recordKey : json.keySet()) {
+                JSONObject record = (JSONObject) json.get((String) recordKey);
+
+                data[i][0] = (String) recordKey;
+                data[i][1] = record.get("Product Name").toString();
+                data[i][2] = record.get("Description").toString();
+                data[i][3] = record.get("Cost").toString();
+                data[i][4] = record.get("Quantity").toString();
+                data[i][5] = record.get("Total Value").toString();
+
+                inventoryRecords.put((String) recordKey, new HashMap<String, String>());
+
+                inventoryRecords.get(data[i][0]).put("Product Name", data[i][1]);
+                inventoryRecords.get(data[i][0]).put("Description", data[i][2]);
+                inventoryRecords.get(data[i][0]).put("Cost", data[i][3]);
+                inventoryRecords.get(data[i][0]).put("Quantity", data[i][4]);
+                inventoryRecords.get(data[i][0]).put("Total Value", data[i][5]);
+
+                i++;
+
+            }
+
+            tableModel.setDataVector(data, new String[]{"Product ID", "Product Name", "Description", "Cost", "Quantity", "Total Value"});
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     HashMap<String, String> getJsonSalesRecord(String saleId) {
         try {
             String content = new String(Files.readAllBytes(Paths.get("src/Programming2_CW2/SalesRecords.json")));
@@ -431,42 +529,6 @@ class InventoryManagerApp {
         catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    void loadInventoryRecords() {
-        try {
-            String content = new String(Files.readAllBytes(Paths.get("src/Programming2_CW2/StockRecords.json")));
-            JSONObject json = new JSONObject(content);
-
-            String[][] data = new String[json.length()][6];
-            int i = 0;
-            for (Object recordKey : json.keySet()) {
-                JSONObject record = (JSONObject) json.get((String) recordKey);
-
-                data[i][0] = (String) recordKey;
-                data[i][1] = record.get("Product Name").toString();
-                data[i][2] = record.get("Description").toString();
-                data[i][3] = record.get("Cost").toString();
-                data[i][4] = record.get("Quantity").toString();
-                data[i][5] = record.get("Total Value").toString();
-
-                inventoryRecords.put((String) recordKey, new HashMap<String, String>());
-
-                inventoryRecords.get(data[i][0]).put("Product Name", data[i][1]);
-                inventoryRecords.get(data[i][0]).put("Description", data[i][2]);
-                inventoryRecords.get(data[i][0]).put("Cost", data[i][3]);
-                inventoryRecords.get(data[i][0]).put("Quantity", data[i][4]);
-                inventoryRecords.get(data[i][0]).put("Total Value", data[i][5]);
-
-                i++;
-
-            }
-
-            tableModel.setDataVector(data, new String[]{"Product ID", "Product Name", "Description", "Cost", "Quantity", "Total Value"});
-        }
-        catch (IOException e) {
-                throw new RuntimeException(e);
-            }
     }
 
     void removeSelectedRecords() {
