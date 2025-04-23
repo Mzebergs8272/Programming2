@@ -421,7 +421,6 @@ class InventoryManagerApp {
             details.put("Total Value", record.get(5));
             inventoryRecords.put(record.getFirst(), details);
 
-
         }
 
 
