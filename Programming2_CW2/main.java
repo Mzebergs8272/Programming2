@@ -227,7 +227,7 @@ class InventoryManagerApp {
         // creates modal window
         // text fields to specify ID, Name, Description, Cost, Quantity, Total Value
         // access tableModel to add row
-        tableModel.addRow(new String[]{String.valueOf(tableModel.getRowCount()), "", "", "", "", ""});
+        tableModel.addRow(new String[]{String.valueOf(tableModel.getRowCount()+1), "", "", "", "", ""});
 
     }
 
@@ -381,32 +381,34 @@ class InventoryManagerApp {
 
     void updateInventoryTable() {
         for (Vector<String> record : tableModel.getDataVector()) {
-            if (inventoryRecords.get(record.getFirst()) == null) {
-                HashMap<String, String> details = new HashMap<>();
-                details.put("Product Name", record.get(1));
-                details.put("Description", record.get(2));
-                details.put("Cost", record.get(3));
-                details.put("Quantity", record.get(4));
-                details.put("Total Value", record.get(5));
-                inventoryRecords.put(record.getFirst(), details);
 
-            }
+            HashMap<String, String> details = new HashMap<>();
+            details.put("Product Name", record.get(1));
+            details.put("Description", record.get(2));
+            details.put("Cost", record.get(3));
+            details.put("Quantity", record.get(4));
+            details.put("Total Value", record.get(5));
+            inventoryRecords.put(record.getFirst(), details);
+
+
         }
+
+
     }
 
     void updateSalesTable() {
         for (Vector<String> record : tableModel.getDataVector()) {
-            if (salesRecords.get(record.getFirst()) == null) {
-                HashMap<String, String> details = new HashMap<>();
-                details.put("Product ID", record.get(1));
-                details.put("Customer ID", record.get(2));
-                details.put("Date", record.get(3));
-                details.put("Quantity", record.get(4));
-                details.put("Total Value", record.get(5));
 
-                salesRecords.put(record.getFirst(), details);
+            HashMap<String, String> details = new HashMap<>();
+            details.put("Product ID", record.get(1));
+            details.put("Customer ID", record.get(2));
+            details.put("Date", record.get(3));
+            details.put("Quantity", record.get(4));
+            details.put("Total Value", record.get(5));
 
-            }
+            salesRecords.put(record.getFirst(), details);
+
+
         }
     }
 
@@ -661,21 +663,60 @@ class InventoryManagerApp {
     }
 
     void saveRecords() {
-        updateInventoryTable();
-        try(FileWriter writer = new FileWriter("src/Programming2_CW2/StockRecords.json")) {
-            JSONObject newRecords = new JSONObject();
-            for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
-                JSONObject details = new JSONObject(record.getValue());
-                newRecords.put(record.getKey(), details);
+        if (tableModel.getColumnName(0).equals("Product ID")) {
+            try (FileWriter writer = new FileWriter("src/Programming2_CW2/StockRecords.json")) {
+
+                updateInventoryTable();
+
+                JSONObject newInventoryRecords = new JSONObject();
+                for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
+                    JSONObject details = new JSONObject(record.getValue());
+                    newInventoryRecords.put(record.getKey(), details);
+                }
+                writer.write(newInventoryRecords.toString());
+
+                drawSalesRecords();
+
+                JSONObject newSalesRecords = new JSONObject();
+                for (Map.Entry<String, HashMap<String, String>> record : salesRecords.entrySet()) {
+                    JSONObject details = new JSONObject(record.getValue());
+                    newSalesRecords.put(record.getKey(), details);
+                }
+                writer.write(newSalesRecords.toString());
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            System.out.println(newRecords.toString());
-            writer.write(newRecords.toString());
 
+            drawInventoryRecords();
         }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        else {
+            try (FileWriter writer = new FileWriter("src/Programming2_CW2/salesRecords.json")) {
+                updateSalesTable();
 
+                JSONObject newSalesRecords = new JSONObject();
+                for (Map.Entry<String, HashMap<String, String>> record : salesRecords.entrySet()) {
+                    JSONObject details = new JSONObject(record.getValue());
+                    newSalesRecords.put(record.getKey(), details);
+                }
+                writer.write(newSalesRecords.toString());
+
+                drawInventoryRecords();
+
+                JSONObject newInventoryRecords = new JSONObject();
+                for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
+                    JSONObject details = new JSONObject(record.getValue());
+                    newInventoryRecords.put(record.getKey(), details);
+                }
+                writer.write(newInventoryRecords.toString());
+
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            drawSalesRecords();
+        }
     }
 
     // draws window displaying graphs for inventory
