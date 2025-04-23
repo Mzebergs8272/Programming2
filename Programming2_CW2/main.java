@@ -298,17 +298,19 @@ class InventoryManagerApp {
 
         winAddSale.addWindowListener(new WindowAdapter() {
             public void windowClosed(WindowEvent e) {
-            window.setEnabled(true);
-            window.toFront();
+                window.setEnabled(true);
+                window.toFront();
             }
         });
 
         window.setEnabled(false);
-        winAddSale.setLayout(new FlowLayout());
-        winAddSale.setSize(new Dimension(400, 200));
+        winAddSale.setSize(new Dimension(450, 300));
+        winAddSale.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-
-        JComboBox<String> dropdown = new JComboBox<String>();
+        JComboBox<String> dropdown = new JComboBox<>();
         dropdown.setPreferredSize(new Dimension(250, 25));
         for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
             String recordString =
@@ -317,6 +319,7 @@ class InventoryManagerApp {
                             " | Desc: " + record.getValue().get("Description");
             dropdown.addItem(recordString);
         }
+
         JLabel lblDropdown = new JLabel("Select product");
         JLabel lblQuantity = new JLabel("Quantity");
         JLabel lblCustomerID = new JLabel("Customer ID");
@@ -330,19 +333,56 @@ class InventoryManagerApp {
         txtDate.setPreferredSize(new Dimension(225, 25));
 
         JButton btnAddSale = new JButton("Add Sale");
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        winAddSale.add(lblDropdown, gbc);
+        gbc.gridx = 1;
+        winAddSale.add(dropdown, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        winAddSale.add(lblQuantity, gbc);
+        gbc.gridx = 1;
+        winAddSale.add(txtQuantity, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        winAddSale.add(lblCustomerID, gbc);
+        gbc.gridx = 1;
+        winAddSale.add(txtCustomerID, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        winAddSale.add(lblDate, gbc);
+        gbc.gridx = 1;
+        winAddSale.add(txtDate, gbc);
+
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        gbc.anchor = GridBagConstraints.CENTER;
+        winAddSale.add(btnAddSale, gbc);
+
+        //Button logic
         btnAddSale.addActionListener(e -> {
             String selectedProductID = dropdown.getSelectedItem().toString().split(" ")[1];
-            // if specified quantity of selected product is available
             if (Integer.parseInt(txtQuantity.getText()) <= Integer.parseInt(inventoryRecords.get(selectedProductID).get("Quantity"))) {
                 if (txtDate.getText().matches("^[0-3]?[0-9]/[0-3]?[0-9]/(?:[0-9]{2})?[0-9]{2}$")) {
                     tableModel.addRow(new String[]{
-                        String.valueOf(tableModel.getRowCount() + 1),
-                        selectedProductID, txtCustomerID.getText(),
-                        txtDate.getText(), txtQuantity.getText(),
-                        String.valueOf(Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost")) * Integer.parseInt(txtQuantity.getText()))
+                            String.valueOf(tableModel.getRowCount() + 1),
+                            selectedProductID, txtCustomerID.getText(),
+                            txtDate.getText(), txtQuantity.getText(),
+                            String.valueOf(Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost")) * Integer.parseInt(txtQuantity.getText()))
                     });
-                    inventoryRecords.get(selectedProductID).put("Quantity", String.valueOf(Integer.parseInt(inventoryRecords.get(selectedProductID).get("Quantity")) - Integer.parseInt(txtQuantity.getText())));
-                    inventoryRecords.get(selectedProductID).put("Total Value", String.valueOf(Integer.parseInt(inventoryRecords.get(selectedProductID).get("Quantity")) * Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost"))));
+
+                    inventoryRecords.get(selectedProductID).put("Quantity", String.valueOf(
+                            Integer.parseInt(inventoryRecords.get(selectedProductID).get("Quantity")) -
+                                    Integer.parseInt(txtQuantity.getText())
+                    ));
+                    inventoryRecords.get(selectedProductID).put("Total Value", String.valueOf(
+                            Integer.parseInt(inventoryRecords.get(selectedProductID).get("Quantity")) *
+                                    Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost"))
+                    ));
 
                     HashMap<String, String> newInventoryRecord = getJsonInventoryRecord(selectedProductID);
                     newInventoryRecord.put("Quantity", inventoryRecords.get(selectedProductID).get("Quantity"));
@@ -355,29 +395,20 @@ class InventoryManagerApp {
                     newSaleRecord.put("Customer ID", txtCustomerID.getText());
                     newSaleRecord.put("Date", txtDate.getText());
                     newSaleRecord.put("Quantity", txtQuantity.getText());
-                    newSaleRecord.put("Total Value", String.valueOf(Integer.parseInt(txtQuantity.getText()) * Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost"))));
+                    newSaleRecord.put("Total Value", String.valueOf(
+                            Integer.parseInt(txtQuantity.getText()) *
+                                    Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost"))
+                    ));
 
                     updateJsonSalesRecord(String.valueOf(tableModel.getRowCount()), newSaleRecord);
-
                 }
             }
         });
 
-        winAddSale.add(lblDropdown);
-        winAddSale.add(dropdown);
-
-        winAddSale.add(lblQuantity);
-        winAddSale.add(txtQuantity);
-        winAddSale.add(lblCustomerID);
-        winAddSale.add(txtCustomerID);
-        winAddSale.add(lblDate);
-        winAddSale.add(txtDate);
-        winAddSale.add(btnAddSale);
-
-        winAddSale.add(dropdown);
+        winAddSale.setLocationRelativeTo(null);
         winAddSale.setVisible(true);
-
     }
+
 
     void updateInventoryTable() {
         for (Vector<String> record : tableModel.getDataVector()) {
