@@ -145,15 +145,18 @@ class InventoryManagerApp {
         btnSave.addActionListener(e -> saveRecords());
 
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
             public void insertUpdate(DocumentEvent e) {
                 searchTable(txtSearch.getText());
             }
+            @Override
             public void removeUpdate(DocumentEvent e) {
                 searchTable(txtSearch.getText());
             }
-            public void changedUpdate(DocumentEvent e) {
-                searchTable(txtSearch.getText());
-            }
+            @Override
+            public void changedUpdate(DocumentEvent e) {}
+
+
         });
 
         containerTableEdits.add(btnAddRecord);
@@ -184,9 +187,18 @@ class InventoryManagerApp {
     }
 
     void searchTable(String query) {
+        if (tableModel.getColumnName(0).equals("Product ID")) {
+            updateInventoryTable();
+
+        }
+        else updateSalesTable();
 
         if (query == null || query.isEmpty()) {
-            loadInventoryRecords();
+            if (tableModel.getColumnName(0).equals("Product ID")) {
+                drawInventoryRecords();
+            }
+            else drawSalesRecords();
+
             return;
         }
 
@@ -196,16 +208,12 @@ class InventoryManagerApp {
             ArrayList<String> resultRecord = new ArrayList<>();
             for (String column : record) {
                 resultRecord.add(column);
+                System.out.println(column + " " + query);
                 if (column != null && column.equalsIgnoreCase(query)) {
                     match = true;
                 }
             }
             if (match) result.add(resultRecord);
-        }
-
-        String[] columnNames = new String[tableModel.getColumnCount()];
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            columnNames[i] = tableModel.getColumnName(i);
         }
 
         if (!result.isEmpty()) {
@@ -216,10 +224,10 @@ class InventoryManagerApp {
                     arrResult[i][j] = result.get(i).get(j);
                 }
             }
-            tableModel.setDataVector(arrResult, columnNames);
+            tableModel.setDataVector(arrResult, tableModel.getColumnName(0).equals("Product ID") ? inventoryColumnNames : salesColumnNames);
         }
         else {
-            tableModel.setDataVector(new String[][]{}, columnNames);
+            tableModel.setDataVector(new String[][]{}, tableModel.getColumnName(0).equals("Product ID") ? inventoryColumnNames : salesColumnNames);
         }
     }
 
@@ -292,7 +300,10 @@ class InventoryManagerApp {
 
     }
 
+
+
     void drawWinAddSale() {
+
         JFrame winAddSale = new JFrame("Add Sale");
         winAddSale.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -316,7 +327,7 @@ class InventoryManagerApp {
             String recordString =
                     "ID: " + record.getKey() +
                             " | Name: " + record.getValue().get("Product Name") +
-                            " | Desc: " + record.getValue().get("Description");
+                            " | Quantity: " + record.getValue().get("Quantity");
             dropdown.addItem(recordString);
         }
 
@@ -326,7 +337,7 @@ class InventoryManagerApp {
         JLabel lblDate = new JLabel("Date");
 
         JTextField txtQuantity = new JTextField();
-        txtQuantity.setPreferredSize(new Dimension(225, 25));
+        txtQuantity.setPreferredSize(new Dimension(325, 25));
         JTextField txtCustomerID = new JTextField();
         txtCustomerID.setPreferredSize(new Dimension(225, 25));
         JTextField txtDate = new JTextField();
@@ -366,42 +377,63 @@ class InventoryManagerApp {
         //Button logic
         btnAddSale.addActionListener(e -> {
             String selectedProductID = dropdown.getSelectedItem().toString().split(" ")[1];
-            if (Integer.parseInt(txtQuantity.getText()) <= Integer.parseInt(inventoryRecords.get(selectedProductID).get("Quantity"))) {
-                if (txtDate.getText().matches("^[0-3]?[0-9]/[0-3]?[0-9]/(?:[0-9]{2})?[0-9]{2}$")) {
-                    tableModel.addRow(new String[]{
-                            String.valueOf(tableModel.getRowCount() + 1),
-                            selectedProductID, txtCustomerID.getText(),
-                            txtDate.getText(), txtQuantity.getText(),
-                            String.valueOf(Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost")) * Integer.parseInt(txtQuantity.getText()))
-                    });
 
-                    inventoryRecords.get(selectedProductID).put("Quantity", String.valueOf(
-                            Integer.parseInt(inventoryRecords.get(selectedProductID).get("Quantity")) -
-                                    Integer.parseInt(txtQuantity.getText())
-                    ));
-                    inventoryRecords.get(selectedProductID).put("Total Value", String.valueOf(
-                            Integer.parseInt(inventoryRecords.get(selectedProductID).get("Quantity")) *
-                                    Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost"))
-                    ));
+            try {
+                float prodCost = Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost"));
+                int prodQuantity = Integer.parseInt(inventoryRecords.get(selectedProductID).get("Quantity"));
 
-                    HashMap<String, String> newInventoryRecord = getJsonInventoryRecord(selectedProductID);
-                    newInventoryRecord.put("Quantity", inventoryRecords.get(selectedProductID).get("Quantity"));
-                    newInventoryRecord.put("Total Value", inventoryRecords.get(selectedProductID).get("Total Value"));
+                try {
+                    int selectedQuantity = Integer.parseInt(txtQuantity.getText());
 
-                    updateJsonInventoryRecord(selectedProductID, newInventoryRecord);
+                    if (selectedQuantity <= prodQuantity && selectedQuantity > 0) {
+                        if (txtDate.getText().matches("^[0-3]?[0-9]/[0-3]?[0-9]/(?:[0-9]{2})?[0-9]{2}$")) {
+                            tableModel.addRow(new String[]{
+                                String.valueOf(tableModel.getRowCount() + 1),
+                                selectedProductID, txtCustomerID.getText(),
+                                txtDate.getText(), txtQuantity.getText(),
+                                String.valueOf(prodCost * selectedQuantity)
+                            });
 
-                    HashMap<String, String> newSaleRecord = new HashMap<>();
-                    newSaleRecord.put("Product ID", selectedProductID);
-                    newSaleRecord.put("Customer ID", txtCustomerID.getText());
-                    newSaleRecord.put("Date", txtDate.getText());
-                    newSaleRecord.put("Quantity", txtQuantity.getText());
-                    newSaleRecord.put("Total Value", String.valueOf(
-                            Integer.parseInt(txtQuantity.getText()) *
-                                    Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost"))
-                    ));
+                            inventoryRecords.get(selectedProductID).put("Quantity", String.valueOf(prodQuantity - selectedQuantity));
+                            inventoryRecords.get(selectedProductID).put("Total Value", String.valueOf((prodQuantity - selectedQuantity) * prodCost));
 
-                    updateJsonSalesRecord(String.valueOf(tableModel.getRowCount()), newSaleRecord);
+                            HashMap<String, String> newInventoryRecord = getJsonInventoryRecord(selectedProductID);
+                            newInventoryRecord.put("Quantity", inventoryRecords.get(selectedProductID).get("Quantity"));
+                            newInventoryRecord.put("Total Value", inventoryRecords.get(selectedProductID).get("Total Value"));
+
+                            updateJsonInventoryRecord(selectedProductID, newInventoryRecord);
+
+                            HashMap<String, String> newSaleRecord = new HashMap<>();
+                            newSaleRecord.put("Product ID", selectedProductID);
+                            newSaleRecord.put("Customer ID", txtCustomerID.getText());
+                            newSaleRecord.put("Date", txtDate.getText());
+                            newSaleRecord.put("Quantity", txtQuantity.getText());
+                            newSaleRecord.put("Total Value", String.valueOf(selectedQuantity * prodCost));
+
+                            updateJsonSalesRecord(String.valueOf(tableModel.getRowCount()), newSaleRecord);
+
+
+                            JOptionPane.showMessageDialog(null, "Successfully added sale.", "Success!", JOptionPane.PLAIN_MESSAGE);
+
+
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Format for date is incorrect. Use an accepted format: dd/mm/yyy.", "Format error!", JOptionPane.WARNING_MESSAGE);
+
+                        }
+                    } else if (selectedQuantity <= 0) {
+                        JOptionPane.showMessageDialog(null, "Specified product quantity cannot be zero.", "Product quantity error!", JOptionPane.WARNING_MESSAGE);
+
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Insufficient quantity of chosen product for specified quantity.", "Product quantity error!", JOptionPane.WARNING_MESSAGE);
+                    }
                 }
+                catch (NumberFormatException numFormatException) {
+                        JOptionPane.showMessageDialog(null, "Quantity must be an integer.", "Format error!", JOptionPane.WARNING_MESSAGE);
+                        System.out.println(numFormatException.getMessage());
+                    }
+
+            } catch (NumberFormatException emptyFieldException) {
+                JOptionPane.showMessageDialog(null, "Specified product must have a cost and quantity.", "Format error!", JOptionPane.WARNING_MESSAGE);
             }
         });
 
@@ -423,7 +455,6 @@ class InventoryManagerApp {
 
         }
 
-
     }
 
     void updateSalesTable() {
@@ -437,7 +468,6 @@ class InventoryManagerApp {
             details.put("Total Value", record.get(5));
 
             salesRecords.put(record.getFirst(), details);
-
 
         }
     }
