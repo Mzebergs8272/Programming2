@@ -16,6 +16,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.*;
+import java.util.Map;
 import java.util.concurrent.Flow;
 
 
@@ -113,8 +114,47 @@ class InventoryManagerApp {
 
         btnInventoryPage.addActionListener(e -> loadInventoryPage());
         btnSalesPage.addActionListener(e -> loadSalesPage());
-        btnInventoryReport.addActionListener(e -> drawWinInventoryReport());
-        btnSalesReport.addActionListener(e -> drawWinSalesReport());
+        btnInventoryReport.addActionListener(e -> {
+            // generate inventory report
+            drawWinInventoryReport();
+
+            // open the inventory report
+            try {
+                File reportFile = new File("Inventory_Report.xlsx");
+                if (reportFile.exists()) {
+                    // open the inventory report with excel or default application
+                    Desktop.getDesktop().open(reportFile);
+                } else {
+                    // validation for inventory report file not existing
+                    JOptionPane.showMessageDialog(window, "Inventory report file does not exist.");
+                }
+                // bug handling for the report not opening
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(window, "Error opening the report.");
+            }
+        });
+
+        btnSalesReport.addActionListener(e -> {
+            // generate sales report
+            drawWinSalesReport();
+
+            // open the sales report
+            try {
+                File reportFile = new File("Sales_Report.xlsx");
+                if (reportFile.exists()) {
+                    // open the sales report with excel or default application
+                    Desktop.getDesktop().open(reportFile);
+                } else {
+                    // validation for sales report file not existing
+                    JOptionPane.showMessageDialog(window, "Sales report file does not exist.");
+                }
+                // bug handling for the report not opening
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(window, "Error opening the report.");
+            }
+        });
 
         containerNavBar.add(btnInventoryPage);
         containerNavBar.add(btnSalesPage);
@@ -780,7 +820,91 @@ class InventoryManagerApp {
     }
 
     // draws window displaying graphs for inventory
-    void drawWinInventoryReport() {}
+    void drawWinInventoryReport() {
+        try {
+            // create workbook and select first sheet
+            com.aspose.cells.Workbook workbook = new com.aspose.cells.Workbook();
+            com.aspose.cells.Worksheet sheet = workbook.getWorksheets().get(0);
+            com.aspose.cells.Cells cells = sheet.getCells();
+
+            // create headers for each bit of data
+            String[] headers = {"Sale ID", "Product ID", "Date", "Quantity", "Total Value"};
+            for (int i = 0; i < headers.length; i++) {
+                cells.get(0, i).putValue(headers[i]);
+            }
+
+            // insert data from the StockRecords
+            int row = 1;
+            for (Map.Entry<String, HashMap<String, String>> entry : inventoryRecords.entrySet()) {
+                String quantity = entry.getValue().get("Quantity");
+                String total = entry.getValue().get("Total Value");
+
+                int quantityInt = (quantity != null && !quantity.isEmpty()) ? Integer.parseInt(quantity) : 0;
+                double totalValue = (total != null && !total.isEmpty()) ? Double.parseDouble(total) : 0;
+
+
+                cells.get(row, 0).putValue(entry.getKey());
+                cells.get(row, 1).putValue(entry.getValue().get("Product Name"));
+                cells.get(row, 2).putValue(quantityInt);
+                cells.get(row, 3).putValue(totalValue);
+            }
+
+            // create bar chart along with all the details
+            int chartIndex = sheet.getCharts().add(com.aspose.cells.ChartType.BAR, row + 2, 0, row + 20, 6);
+            com.aspose.cells.Chart chart = sheet.getCharts().get(chartIndex);
+            chart.getTitle().setText("Inventory Report");
+            chart.getNSeries().add("C2:C" + row, true);
+            chart.getNSeries().setCategoryData("B2:B" + row);
+            chart.getNSeries().get(0).setName("Quantity");
+
+            // save the workbook
+            workbook.save("Inventory_Report.xlsx");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("already running?");
+            JOptionPane.showMessageDialog(window, "Error generating inventory report. Could it be already running?");
+        }
+    }
     // draws window displaying graphs for sales
-    void drawWinSalesReport() {}
+    void drawWinSalesReport() {
+        try {
+            // create workbook and select first sheet
+            com.aspose.cells.Workbook workbook = new com.aspose.cells.Workbook();
+            com.aspose.cells.Worksheet sheet = workbook.getWorksheets().get(0);
+            com.aspose.cells.Cells cells = sheet.getCells();
+
+            // create headers for all of the data
+            String[] headers = {"Sale ID", "Product ID", "Customer ID", "Date", "Quantity", "Total Value"};
+            for (int i = 0; i < headers.length; i++) {
+                cells.get(0, i).putValue(headers[i]);
+            }
+
+            // insert data from SalesRecords
+            int row = 1;
+            for (Map.Entry<String, HashMap<String, String>> entry : salesRecords.entrySet()) {
+                cells.get(row, 0).putValue(entry.getKey());
+                cells.get(row, 1).putValue(entry.getValue().get("Product ID"));
+                cells.get(row, 2).putValue(entry.getValue().get("Customer ID"));
+                cells.get(row, 3).putValue(entry.getValue().get("Date"));
+                cells.get(row, 4).putValue(Integer.parseInt(entry.getValue().get("Quantity")));
+                cells.get(row, 5).putValue(Double.parseDouble(entry.getValue().get("Total Value")));
+                row++;
+            }
+
+            // create line graph with all details
+            int chartIndex = sheet.getCharts().add(com.aspose.cells.ChartType.LINE, row + 2, 0, row + 20, 6);
+            com.aspose.cells.Chart chart = sheet.getCharts().get(chartIndex);
+            chart.getNSeries().add("F2:F" + row, true);
+            chart.getNSeries().setCategoryData("B2:B" + row);
+            chart.getNSeries().get(0).setName("Sales Total Value");
+            chart.getTitle().setText("Sales Report");
+
+            // save the workbook
+            workbook.save("Sales_Report.xlsx");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("already running?");
+            JOptionPane.showMessageDialog(window, "Error generating sales report. Could it be already running?");
+        }
+    }
 }
