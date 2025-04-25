@@ -1,5 +1,8 @@
 package Programming2_CW2;
 
+import com.aspose.cells.ChartType;
+import com.aspose.cells.ImageOrPrintOptions;
+import com.aspose.cells.SaveFormat;
 import org.json.JSONObject;
 
 import java.awt.event.WindowAdapter;
@@ -821,6 +824,7 @@ class InventoryManagerApp {
 
     // draws window displaying graphs for inventory
     void drawWinInventoryReport() {
+        updateInventoryTable();
         try {
             // create workbook and select first sheet
             com.aspose.cells.Workbook workbook = new com.aspose.cells.Workbook();
@@ -828,7 +832,7 @@ class InventoryManagerApp {
             com.aspose.cells.Cells cells = sheet.getCells();
 
             // create headers for each bit of data
-            String[] headers = {"Sale ID", "Product ID", "Date", "Quantity", "Total Value"};
+            String[] headers = {"Product ID", "Product Name", "Cost", "Quantity"};
             for (int i = 0; i < headers.length; i++) {
                 cells.get(0, i).putValue(headers[i]);
             }
@@ -837,25 +841,28 @@ class InventoryManagerApp {
             int row = 1;
             for (Map.Entry<String, HashMap<String, String>> entry : inventoryRecords.entrySet()) {
                 String quantity = entry.getValue().get("Quantity");
-                String total = entry.getValue().get("Total Value");
 
                 int quantityInt = (quantity != null && !quantity.isEmpty()) ? Integer.parseInt(quantity) : 0;
-                double totalValue = (total != null && !total.isEmpty()) ? Double.parseDouble(total) : 0;
-
 
                 cells.get(row, 0).putValue(entry.getKey());
                 cells.get(row, 1).putValue(entry.getValue().get("Product Name"));
                 cells.get(row, 2).putValue(quantityInt);
-                cells.get(row, 3).putValue(totalValue);
+                row++;
             }
 
             // create bar chart along with all the details
-            int chartIndex = sheet.getCharts().add(com.aspose.cells.ChartType.BAR, row + 2, 0, row + 20, 6);
+            int chartIndex = sheet.getCharts().add(com.aspose.cells.ChartType.COLUMN, row + 2, 0, row + 30, 10);
             com.aspose.cells.Chart chart = sheet.getCharts().get(chartIndex);
+            chart.getCategoryAxis().getTitle().setText("Product");
+            chart.getValueAxis().getTitle().setText("Quantity");
             chart.getTitle().setText("Inventory Report");
             chart.getNSeries().add("C2:C" + row, true);
             chart.getNSeries().setCategoryData("B2:B" + row);
-            chart.getNSeries().get(0).setName("Quantity");
+            chart.setShowLegend(false);
+
+            chart.toImage("src/Programming2_CW2/charts/inventoryChart.png");
+
+            // creates a window with the image of the chart
 
             // save the workbook
             workbook.save("Inventory_Report.xlsx");
@@ -867,6 +874,7 @@ class InventoryManagerApp {
     }
     // draws window displaying graphs for sales
     void drawWinSalesReport() {
+        updateSalesTable();
         try {
             // create workbook and select first sheet
             com.aspose.cells.Workbook workbook = new com.aspose.cells.Workbook();
@@ -892,12 +900,16 @@ class InventoryManagerApp {
             }
 
             // create line graph with all details
-            int chartIndex = sheet.getCharts().add(com.aspose.cells.ChartType.LINE, row + 2, 0, row + 20, 6);
+            int chartIndex = sheet.getCharts().add(ChartType.COLUMN, row + 2, 0, row + 30, 10);
             com.aspose.cells.Chart chart = sheet.getCharts().get(chartIndex);
+            chart.getCategoryAxis().getTitle().setText("Sale ID");
+            chart.getValueAxis().getTitle().setText("Sale Value");
             chart.getNSeries().add("F2:F" + row, true);
-            chart.getNSeries().setCategoryData("B2:B" + row);
-            chart.getNSeries().get(0).setName("Sales Total Value");
+            chart.getNSeries().setCategoryData("A2:A" + row);
             chart.getTitle().setText("Sales Report");
+            chart.setShowLegend(false);
+
+            chart.toImage("src/Programming2_CW2/charts/salesChart.png");
 
             // save the workbook
             workbook.save("Sales_Report.xlsx");
