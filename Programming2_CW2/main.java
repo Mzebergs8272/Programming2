@@ -407,63 +407,67 @@ class InventoryManagerApp {
 
     void drawWinRemoveRecord() {
         JFrame winRemoveRecord = new JFrame("Remove Record");
-        winRemoveRecord.setLayout(new FlowLayout());
+        winRemoveRecord.setLayout(new GridBagLayout());
+        winRemoveRecord.setSize(new Dimension(600, 300));
+        winRemoveRecord.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        window.setEnabled(false);
 
         winRemoveRecord.addWindowListener(new WindowAdapter() {
             public void windowClosed(WindowEvent e) {
-            window.setEnabled(true);
-            window.toFront();
+                window.setEnabled(true);
+                window.toFront();
             }
         });
 
-        winRemoveRecord.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        window.setEnabled(false);
-        winRemoveRecord.setSize(new Dimension(400, 200));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        JLabel lblRangeRemove = new JLabel("Range of records to remove. Example: 1-5");
+        JTextField txtRangeRemove = new JTextField(15);
+        JLabel lblListRemove = new JLabel("List of records to remove. Example: 1 2 3 4 5");
+        JTextField txtListRemove = new JTextField(15);
 
-        JLabel lblRangeRemove = new JLabel("Specify range of records to remove. Example: 1-5");
-        JLabel lblListRemove = new JLabel("Specify list of records to remove. Example: 1 2 3 4 5");
-
-        JTextField txtRangeRemove = new JTextField();
-        txtRangeRemove.setPreferredSize(new Dimension(200, 25));
-        JTextField txtListRemove = new JTextField();
-        txtListRemove.setPreferredSize(new Dimension(200, 25));
-
-        JButton btnRemoveRecord = new JButton("Remove specified records");
+        JButton btnRemoveRecord = new JButton("Remove Records");
         btnRemoveRecord.addActionListener(e -> {
-
-            ArrayList<String> recordIDs = new ArrayList<String>();
-
+            ArrayList<String> recordIDs = new ArrayList<>();
             recordIDs.addAll(Arrays.asList(txtListRemove.getText().split("[, ]")));
 
-            if (txtRangeRemove.getText().matches("[0-9]-[0-9]")) {
-                System.out.println(txtRangeRemove.getText());
+            if (txtRangeRemove.getText().matches("\\d+-\\d+")) {
                 String[] range = txtRangeRemove.getText().split("-");
                 for (int i = Math.min(Integer.parseInt(range[0]), Integer.parseInt(range[1]));
-                     i <= Math.max(Integer.parseInt(range[0]), Integer.parseInt(range[1]));
-                     i++) {
+                     i <= Math.max(Integer.parseInt(range[0]), Integer.parseInt(range[1])); i++) {
                     recordIDs.add(String.valueOf(i));
                 }
             }
-            // iterates through all records IDs specified and removes corresponding records from tableModel
+
             for (String recordID : recordIDs) {
                 Vector<Vector> dataVector = tableModel.getDataVector();
                 for (int i = 0; i < dataVector.size(); i++) {
                     if (dataVector.get(i).elementAt(0).equals(recordID)) {
                         tableModel.removeRow(i);
-                        i -= 1;
+                        i--;
                     }
                 }
             }
         });
 
-        winRemoveRecord.add(lblRangeRemove);
-        winRemoveRecord.add(txtRangeRemove);
-        winRemoveRecord.add(lblListRemove);
-        winRemoveRecord.add(txtListRemove);
-        winRemoveRecord.add(btnRemoveRecord);
+        gbc.gridx = 0; gbc.gridy = 0;
+        winRemoveRecord.add(lblRangeRemove, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 0;
+        winRemoveRecord.add(txtRangeRemove, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1;
+        winRemoveRecord.add(lblListRemove, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 1;
+        winRemoveRecord.add(txtListRemove, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+        winRemoveRecord.add(btnRemoveRecord, gbc);
 
         winRemoveRecord.setVisible(true);
-
     }
 
 
