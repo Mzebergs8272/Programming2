@@ -407,7 +407,10 @@ class InventoryManagerApp {
 
     void drawWinRemoveRecord() {
         JFrame winRemoveRecord = new JFrame("Remove Record");
-        winRemoveRecord.setLayout(new FlowLayout());
+        winRemoveRecord.setLayout(new GridBagLayout());
+        winRemoveRecord.setSize(new Dimension(600, 300));
+        winRemoveRecord.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        window.setEnabled(false);
 
         winRemoveRecord.addWindowListener(new WindowAdapter() {
             public void windowClosed(WindowEvent e) {
@@ -416,23 +419,18 @@ class InventoryManagerApp {
             }
         });
 
-        winRemoveRecord.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        window.setEnabled(false);
-        winRemoveRecord.setSize(new Dimension(400, 200));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        JLabel lblRangeRemove = new JLabel("Range of records to remove. Example: 1-5");
+        JTextField txtRangeRemove = new JTextField(15);
+        JLabel lblListRemove = new JLabel("List of records to remove. Example: 1 2 3 4 5");
+        JTextField txtListRemove = new JTextField(15);
 
-        JLabel lblRangeRemove = new JLabel("Specify range of records to remove. Example: 1-5");
-        JLabel lblListRemove = new JLabel("Specify list of records to remove. Example: 1 2 3 4 5");
-
-        JTextField txtRangeRemove = new JTextField();
-        txtRangeRemove.setPreferredSize(new Dimension(200, 25));
-        JTextField txtListRemove = new JTextField();
-        txtListRemove.setPreferredSize(new Dimension(200, 25));
-
-        JButton btnRemoveRecord = new JButton("Remove specified records");
+        JButton btnRemoveRecord = new JButton("Remove Records");
         btnRemoveRecord.addActionListener(e -> {
-
-            ArrayList<String> recordIDs = new ArrayList<String>();
-
+            ArrayList<String> recordIDs = new ArrayList<>();
             recordIDs.addAll(Arrays.asList(txtListRemove.getText().split("[, ]")));
 
             if (txtRangeRemove.getText().matches("[0-9]-[0-9]")) {
@@ -476,11 +474,20 @@ class InventoryManagerApp {
             JOptionPane.showMessageDialog(null, "Specified records deleted.", "Success!", JOptionPane.PLAIN_MESSAGE);
         });
 
-        winRemoveRecord.add(lblRangeRemove);
-        winRemoveRecord.add(txtRangeRemove);
-        winRemoveRecord.add(lblListRemove);
-        winRemoveRecord.add(txtListRemove);
-        winRemoveRecord.add(btnRemoveRecord);
+        gbc.gridx = 0; gbc.gridy = 0;
+        winRemoveRecord.add(lblRangeRemove, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 0;
+        winRemoveRecord.add(txtRangeRemove, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1;
+        winRemoveRecord.add(lblListRemove, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 1;
+        winRemoveRecord.add(txtListRemove, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+        winRemoveRecord.add(btnRemoveRecord, gbc);
 
         winRemoveRecord.setVisible(true);
 
@@ -794,7 +801,6 @@ class InventoryManagerApp {
 
         }
 
-
     }
 
     // changes ArrayList records to sales records from csv
@@ -947,12 +953,18 @@ class InventoryManagerApp {
             chart.getNSeries().setCategoryData("B2:B" + row);
             chart.setShowLegend(false);
 
-            chart.toImage("src/Programming2_CW2/charts/inventoryChart.png");
+            // save the chart to an image
+            String chartPath = "src/Programming2_CW2/charts/inventoryChart.png";
+            chart.toImage(chartPath);
 
-            // creates a window with the image of the chart
+            // set the default sheet to be the one with the chart
+            workbook.getWorksheets().setActiveSheetIndex(0);
 
             // save the workbook
             workbook.save("Inventory_Report.xlsx");
+
+            // load the window for chart
+            loadChartWin("Inventory Report", chartPath);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("already running?");
@@ -1003,14 +1015,41 @@ class InventoryManagerApp {
             chart.getTitle().setText("Sales Report");
             chart.setShowLegend(false);
 
-            chart.toImage("src/Programming2_CW2/charts/salesChart.png");
+            // save the chart to an image
+            String chartPath = "src/Programming2_CW2/charts/salesChart.png";
+            chart.toImage(chartPath);
+
+            // set the default sheet to be the one with the chart
+            workbook.getWorksheets().setActiveSheetIndex(0);
 
             // save the workbook
             workbook.save("Sales_Report.xlsx");
+
+            // load the window for chart
+            loadChartWin("Sales Report", chartPath);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("already running?");
             JOptionPane.showMessageDialog(window, "Error generating sales report. Could it be already running?");
         }
+    }
+
+    // creates a window with the image of the chart
+    void loadChartWin(String title, String imagePath) {
+        // create a new jframe window with size
+        JFrame chartWindow = new JFrame(title);
+        chartWindow.setSize(800,600);
+        chartWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // load the image from the file path and a label to hold the image
+        ImageIcon chartImage = new ImageIcon(imagePath);
+        JLabel imageLabel = new JLabel(chartImage);
+        imageLabel.setHorizontalAlignment(JLabel.CENTER);
+        imageLabel.setVerticalAlignment(JLabel.CENTER);
+
+        // add the image to the window and make the window visible
+        chartWindow.add(new JScrollPane(imageLabel));
+        chartWindow.setVisible(true);
+        chartWindow.setLocationRelativeTo(null);
     }
 }
