@@ -436,7 +436,6 @@ class InventoryManagerApp {
             recordIDs.addAll(Arrays.asList(txtListRemove.getText().split("[, ]")));
 
             if (txtRangeRemove.getText().matches("[0-9]-[0-9]")) {
-                System.out.println(txtRangeRemove.getText());
                 String[] range = txtRangeRemove.getText().split("-");
                 for (int i = Math.min(Integer.parseInt(range[0]), Integer.parseInt(range[1]));
                      i <= Math.max(Integer.parseInt(range[0]), Integer.parseInt(range[1]));
@@ -448,12 +447,33 @@ class InventoryManagerApp {
             for (String recordID : recordIDs) {
                 Vector<Vector> dataVector = tableModel.getDataVector();
                 for (int i = 0; i < dataVector.size(); i++) {
-                    if (dataVector.get(i).elementAt(0).equals(recordID)) {
+                    if (dataVector.get(i).getFirst().toString().equals(recordID)) {
+                        if (tableModel.getColumnName(0).equals("Sale ID")) {
+                            updateSalesTable();
+
+                            int quantity = Integer.parseInt(dataVector.get(i).get(4).toString());
+                            float totalValue = Float.parseFloat(dataVector.get(i).get(5).toString());
+
+                            // replaces quantity and total value of sale onto product
+                            inventoryRecords.get(dataVector.get(i).getFirst().toString()).put(
+                                    "Quantity",
+                                    String.valueOf(Integer.parseInt(inventoryRecords.get(dataVector.get(i).getFirst().toString()).get("Quantity")) + quantity)
+                            );
+
+                            inventoryRecords.get(dataVector.get(i).getFirst().toString()).put(
+                                    "Total Value",
+                                    String.valueOf(Float.parseFloat(inventoryRecords.get(dataVector.get(i).getFirst().toString()).get("Total Value")) + totalValue)
+                            );
+
+                        }
+
                         tableModel.removeRow(i);
                         i -= 1;
                     }
                 }
             }
+
+            JOptionPane.showMessageDialog(null, "Specified records deleted.", "Success!", JOptionPane.PLAIN_MESSAGE);
         });
 
         winRemoveRecord.add(lblRangeRemove);
@@ -492,8 +512,8 @@ class InventoryManagerApp {
         for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
             String recordString =
                     "ID: " + record.getKey() +
-                            " | Name: " + record.getValue().get("Product Name") +
-                            " | Quantity: " + record.getValue().get("Quantity");
+                    " | Name: " + record.getValue().get("Product Name") +
+                    " | Quantity: " + record.getValue().get("Quantity");
             dropdown.addItem(recordString);
         }
 
@@ -571,9 +591,9 @@ class InventoryManagerApp {
                             dropdown.removeAllItems();
                             for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
                                 String recordString =
-                                        "ID: " + record.getKey() +
-                                                " | Name: " + record.getValue().get("Product Name") +
-                                                " | Quantity: " + record.getValue().get("Quantity");
+                                    "ID: " + record.getKey() +
+                                    " | Name: " + record.getValue().get("Product Name") +
+                                    " | Quantity: " + record.getValue().get("Quantity");
                                 dropdown.addItem(recordString);
                             }
                             updateSalesTable();
@@ -744,18 +764,36 @@ class InventoryManagerApp {
     }
 
     void removeSelectedRecords() {
+
+        Vector<Vector> dataVector = tableModel.getDataVector();
         for (int row : table.getSelectedRows()) {
 
             if (tableModel.getColumnName(0).equals("Sale ID")) {
-                salesRecords.remove(String.valueOf(tableModel.getDataVector().get(row).getFirst()));
+
+                int quantity = Integer.parseInt(dataVector.get(row).get(4).toString());
+                float totalValue = Float.parseFloat(dataVector.get(row).get(5).toString());
+
+                // replaces quantity and total value of sale onto product
+                inventoryRecords.get(dataVector.get(row).get(1).toString()).put(
+                    "Quantity",
+                    String.valueOf(Integer.parseInt(inventoryRecords.get(dataVector.get(row).get(1).toString()).get("Quantity")) + quantity)
+                );
+
+                inventoryRecords.get(dataVector.get(row).get(1).toString()).put(
+                    "Total Value",
+                    String.valueOf(Float.parseFloat(inventoryRecords.get(dataVector.get(row).get(1).toString()).get("Total Value")) + totalValue)
+                );
+
+                salesRecords.remove(String.valueOf(dataVector.get(row).getFirst()));
             }
             else {
-                inventoryRecords.remove(String.valueOf(tableModel.getDataVector().get(row).getFirst()));
+                inventoryRecords.remove(String.valueOf(dataVector.get(row).getFirst()));
             }
 
             tableModel.removeRow(row);
 
         }
+
 
     }
 
@@ -866,7 +904,14 @@ class InventoryManagerApp {
 
     // draws window displaying graphs for inventory
     void drawWinInventoryReport() {
-        updateInventoryTable();
+        if (tableModel.getColumnName(0).equals("Product ID")) {
+            updateInventoryTable();
+        }
+        else {
+            updateSalesTable();
+            drawInventoryRecords();
+        }
+
         try {
             // create workbook and select first sheet
             com.aspose.cells.Workbook workbook = new com.aspose.cells.Workbook();
@@ -916,7 +961,14 @@ class InventoryManagerApp {
     }
     // draws window displaying graphs for sales
     void drawWinSalesReport() {
-        updateSalesTable();
+        if (tableModel.getColumnName(0).equals("Sale ID")) {
+            updateSalesTable();
+        }
+        else {
+            updateInventoryTable();
+            drawSalesRecords();
+        }
+
         try {
             // create workbook and select first sheet
             com.aspose.cells.Workbook workbook = new com.aspose.cells.Workbook();
