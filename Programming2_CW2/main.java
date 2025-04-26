@@ -127,47 +127,8 @@ class InventoryManagerApp {
 
         btnInventoryPage.addActionListener(e -> loadInventoryPage());
         btnSalesPage.addActionListener(e -> loadSalesPage());
-        btnInventoryReport.addActionListener(e -> {
-            // generate inventory report
-            drawWinInventoryReport();
-
-            // open the inventory report
-            try {
-                File reportFile = new File("Inventory_Report.xlsx");
-                if (reportFile.exists()) {
-                    // open the inventory report with excel or default application
-                    Desktop.getDesktop().open(reportFile);
-                } else {
-                    // validation for inventory report file not existing
-                    JOptionPane.showMessageDialog(window, "Inventory report file does not exist.");
-                }
-                // bug handling for the report not opening
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(window, "Error opening the report.");
-            }
-        });
-
-        btnSalesReport.addActionListener(e -> {
-            // generate sales report
-            drawWinSalesReport();
-
-            // open the sales report
-            try {
-                File reportFile = new File("Sales_Report.xlsx");
-                if (reportFile.exists()) {
-                    // open the sales report with excel or default application
-                    Desktop.getDesktop().open(reportFile);
-                } else {
-                    // validation for sales report file not existing
-                    JOptionPane.showMessageDialog(window, "Sales report file does not exist.");
-                }
-                // bug handling for the report not opening
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(window, "Error opening the report.");
-            }
-        });
+        btnInventoryReport.addActionListener(e -> drawWinInventoryReport());
+        btnSalesReport.addActionListener(e -> drawWinSalesReport());
 
         containerNavBar.add(btnInventoryPage);
         containerNavBar.add(btnSalesPage);
@@ -622,6 +583,8 @@ class InventoryManagerApp {
     }
 
     void updateSalesTable() {
+
+
         for (Vector<Object> record : tableModel.getDataVector()) {
 
             HashMap<String, String> details = new HashMap<>();
@@ -902,12 +865,18 @@ class InventoryManagerApp {
             chart.getNSeries().setCategoryData("B2:B" + row);
             chart.setShowLegend(false);
 
-            chart.toImage("src/Programming2_CW2/charts/inventoryChart.png");
+            // save the chart to an image
+            String chartPath = "src/Programming2_CW2/charts/inventoryChart.png";
+            chart.toImage(chartPath);
 
-            // creates a window with the image of the chart
+            // set the default sheet to be the one with the chart
+            workbook.getWorksheets().setActiveSheetIndex(0);
 
             // save the workbook
             workbook.save("Inventory_Report.xlsx");
+
+            // load the window for chart
+            loadChartWin("Inventory Report", chartPath);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("already running?");
@@ -951,14 +920,41 @@ class InventoryManagerApp {
             chart.getTitle().setText("Sales Report");
             chart.setShowLegend(false);
 
-            chart.toImage("src/Programming2_CW2/charts/salesChart.png");
+            // save the chart to an image
+            String chartPath = "src/Programming2_CW2/charts/salesChart.png";
+            chart.toImage(chartPath);
+
+            // set the default sheet to be the one with the chart
+            workbook.getWorksheets().setActiveSheetIndex(0);
 
             // save the workbook
             workbook.save("Sales_Report.xlsx");
+
+            // load the window for chart
+            loadChartWin("Sales Report", chartPath);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("already running?");
             JOptionPane.showMessageDialog(window, "Error generating sales report. Could it be already running?");
         }
+    }
+
+    // creates a window with the image of the chart
+    void loadChartWin(String title, String imagePath) {
+        // create a new jframe window with size
+        JFrame chartWindow = new JFrame(title);
+        chartWindow.setSize(800,600);
+        chartWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // load the image from the file path and a label to hold the image
+        ImageIcon chartImage = new ImageIcon(imagePath);
+        JLabel imageLabel = new JLabel(chartImage);
+        imageLabel.setHorizontalAlignment(JLabel.CENTER);
+        imageLabel.setVerticalAlignment(JLabel.CENTER);
+
+        // add the image to the window and make the window visible
+        chartWindow.add(new JScrollPane(imageLabel));
+        chartWindow.setVisible(true);
+        chartWindow.setLocationRelativeTo(null);
     }
 }
