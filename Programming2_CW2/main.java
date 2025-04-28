@@ -1,8 +1,6 @@
 package Programming2_CW2;
 
 import com.aspose.cells.ChartType;
-import com.aspose.cells.ImageOrPrintOptions;
-import com.aspose.cells.SaveFormat;
 import org.json.JSONObject;
 
 import java.awt.event.ActionListener;
@@ -21,12 +19,11 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.*;
 import java.util.Map;
-import java.util.concurrent.Flow;
 
 
 
 class Main {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         InventoryManagerApp inventoryManager = new InventoryManagerApp();
         inventoryManager.width = 1920;
         inventoryManager.height = 1080;
@@ -78,6 +75,7 @@ class InventoryManagerApp {
         inventoryRecords = new HashMap<>();
         salesColumnNames = new String[]{"Sale ID", "Product ID", "Customer ID", "Date", "Quantity", "Total Value"};
         inventoryColumnNames = new String[]{"Product ID", "Product Name", "Description", "Cost", "Quantity", "Total Value"};
+
     }
 
 
@@ -387,12 +385,12 @@ class InventoryManagerApp {
             else {
                 try {
                     tableModel.addRow(new String[]{
-                            String.valueOf(tableModel.getRowCount() + 1),
-                            txtProdName.getText(),
-                            txtDescription.getText(),
-                            txtCost.getText(),
-                            txtQuantity.getText(),
-                            String.valueOf(Integer.parseInt(txtQuantity.getText()) * Float.parseFloat(txtCost.getText()))
+                        String.valueOf(tableModel.getRowCount() + 1),
+                        txtProdName.getText(),
+                        txtDescription.getText(),
+                        txtCost.getText(),
+                        txtQuantity.getText(),
+                        String.valueOf(Integer.parseInt(txtQuantity.getText()) * Float.parseFloat(txtCost.getText()))
                     });
 
                     JOptionPane.showMessageDialog(null, "Record added", "Success!", JOptionPane.PLAIN_MESSAGE);
@@ -492,8 +490,6 @@ class InventoryManagerApp {
         winRemoveRecord.setVisible(true);
 
     }
-
-
 
     void drawWinAddSale() {
 
@@ -635,7 +631,6 @@ class InventoryManagerApp {
 
     void updateInventoryTable() {
         for (Vector<Object> record : tableModel.getDataVector()) {
-
             HashMap<String, String> details = new HashMap<>();
             details.put("Product Name", record.get(1).toString());
             details.put("Description", record.get(2).toString());
@@ -643,7 +638,6 @@ class InventoryManagerApp {
             details.put("Quantity", record.get(4).toString());
             details.put("Total Value", record.get(5).toString());
             inventoryRecords.put(String.valueOf(record.getFirst()), details);
-
         }
 
     }
@@ -806,6 +800,9 @@ class InventoryManagerApp {
     // changes ArrayList records to sales records from csv
     // changes text on buttons for corresponding page
     void loadSalesPage() {
+        if (tableModel.getColumnName(0).equals("Sale ID")) {
+            return;
+        }
         drawPageTitle("Sales");
         containerNavBar.getComponent(1).setBackground(Color.GREEN);
         containerNavBar.getComponent(0).setBackground(Color.WHITE);
@@ -826,6 +823,10 @@ class InventoryManagerApp {
     // changes records list to inventory records from csv
     // changes display of buttons and nav bar
     void loadInventoryPage() {
+        if (tableModel.getColumnName(0).equals("Product ID")) {
+            return;
+        }
+
         drawPageTitle("Stock");
         containerNavBar.getComponent(1).setBackground(Color.WHITE);
         containerNavBar.getComponent(0).setBackground(Color.GREEN);
