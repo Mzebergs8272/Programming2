@@ -727,34 +727,33 @@ class InventoryManagerApp {
 
     void removeSelectedRecords() {
 
-        Vector<Vector> dataVector = tableModel.getDataVector();
-        for (int row : table.getSelectedRows()) {
+        while (table.getSelectedRows().length > 0) {
+            Vector<Vector> dataVector = tableModel.getDataVector();
+            int firstSelectedRecord = table.getSelectedRows()[0];
 
             if (tableModel.getColumnName(0).equals("Sale ID")) {
 
-                int quantity = Integer.parseInt(dataVector.get(row).get(4).toString());
-                float totalValue = Float.parseFloat(dataVector.get(row).get(5).toString());
+                int quantity = Integer.parseInt(dataVector.get(firstSelectedRecord).get(4).toString());
+                float totalValue = Float.parseFloat(dataVector.get(firstSelectedRecord).get(5).toString());
 
                 // replaces quantity and total value of sale onto product
-                inventoryRecords.get(dataVector.get(row).get(1).toString()).put(
+                inventoryRecords.get(dataVector.get(firstSelectedRecord).get(1).toString()).put(
                     "Quantity",
-                    String.valueOf(Integer.parseInt(inventoryRecords.get(dataVector.get(row).get(1).toString()).get("Quantity")) + quantity)
+                    String.valueOf(Integer.parseInt(inventoryRecords.get(dataVector.get(firstSelectedRecord).get(1).toString()).get("Quantity")) + quantity)
                 );
 
-                inventoryRecords.get(dataVector.get(row).get(1).toString()).put(
+                inventoryRecords.get(dataVector.get(firstSelectedRecord).get(1).toString()).put(
                     "Total Value",
-                    String.valueOf(Float.parseFloat(inventoryRecords.get(dataVector.get(row).get(1).toString()).get("Total Value")) + totalValue)
+                    String.valueOf(Float.parseFloat(inventoryRecords.get(dataVector.get(firstSelectedRecord).get(1).toString()).get("Total Value")) + totalValue)
                 );
 
-                salesRecords.remove(String.valueOf(dataVector.get(row).getFirst()));
-                System.out.println("Record Deleted");
+                salesRecords.remove(String.valueOf(dataVector.get(firstSelectedRecord).getFirst()));
             }
             else {
-                inventoryRecords.remove(String.valueOf(dataVector.get(row).getFirst()));
-                System.out.println("Record Deleted");
+                inventoryRecords.remove(String.valueOf(dataVector.get(firstSelectedRecord).getFirst()));
             }
 
-            tableModel.removeRow(row);
+            tableModel.removeRow(firstSelectedRecord);
 
         }
 
