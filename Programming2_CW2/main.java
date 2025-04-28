@@ -127,47 +127,8 @@ class InventoryManagerApp {
 
         btnInventoryPage.addActionListener(e -> loadInventoryPage());
         btnSalesPage.addActionListener(e -> loadSalesPage());
-        btnInventoryReport.addActionListener(e -> {
-            // generate inventory report
-            drawWinInventoryReport();
-
-            // open the inventory report
-            try {
-                File reportFile = new File("Inventory_Report.xlsx");
-                if (reportFile.exists()) {
-                    // open the inventory report with excel or default application
-                    Desktop.getDesktop().open(reportFile);
-                } else {
-                    // validation for inventory report file not existing
-                    JOptionPane.showMessageDialog(window, "Inventory report file does not exist.");
-                }
-                // bug handling for the report not opening
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(window, "Error opening the report.");
-            }
-        });
-
-        btnSalesReport.addActionListener(e -> {
-            // generate sales report
-            drawWinSalesReport();
-
-            // open the sales report
-            try {
-                File reportFile = new File("Sales_Report.xlsx");
-                if (reportFile.exists()) {
-                    // open the sales report with excel or default application
-                    Desktop.getDesktop().open(reportFile);
-                } else {
-                    // validation for sales report file not existing
-                    JOptionPane.showMessageDialog(window, "Sales report file does not exist.");
-                }
-                // bug handling for the report not opening
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(window, "Error opening the report.");
-            }
-        });
+        btnInventoryReport.addActionListener(e -> drawWinInventoryReport());
+        btnSalesReport.addActionListener(e -> drawWinSalesReport());
 
         containerNavBar.add(btnInventoryPage);
         containerNavBar.add(btnSalesPage);
@@ -792,9 +753,11 @@ class InventoryManagerApp {
                 );
 
                 salesRecords.remove(String.valueOf(dataVector.get(row).getFirst()));
+                System.out.println("Record Deleted");
             }
             else {
                 inventoryRecords.remove(String.valueOf(dataVector.get(row).getFirst()));
+                System.out.println("Record Deleted");
             }
 
             tableModel.removeRow(row);
