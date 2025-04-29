@@ -3,15 +3,16 @@ package Programming2_CW2;
 import com.aspose.cells.ChartType;
 import org.json.JSONObject;
 
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -143,11 +144,12 @@ class InventoryManagerApp {
         containerTableEdits.setBackground(Color.LIGHT_GRAY);
 
         JButton btnAddRecord = new JButton("Add Record");
-        btnAddRecord.setBackground(Color.GREEN);
+        btnAddRecord.setBackground(Color.decode("#09548d"));
         btnAddRecord.setBounds(350, 25, 200, 50);
         JButton btnRemoveRecord = new JButton("Remove Record");
-        btnRemoveRecord.setBackground(Color.GREEN);
+        btnRemoveRecord.setBackground(Color.decode("#09548d"));
         btnRemoveRecord.setBounds(570, 25, 200, 50);
+        btnRemoveRecord.setForeground(Color.WHITE);
         JLabel lblSearch = new JLabel("Search");
         lblSearch.setBounds(1015, 25, 50, 25);
         JTextField txtSearch = new JTextField();
@@ -155,12 +157,13 @@ class InventoryManagerApp {
 
         JButton btnRemoveSelectedRecords = new JButton("Remove Selected Rows");
         btnRemoveSelectedRecords.setBounds(1235, 25, 200, 50);
-        btnRemoveSelectedRecords.setBackground(Color.GREEN);
+        btnRemoveSelectedRecords.setBackground(Color.decode("#09548d"));
+        btnRemoveSelectedRecords.setForeground(Color.WHITE);
 
         JButton btnSave = new JButton("Save All");
         btnSave.setBounds(1455, 25, 200, 50);
-
-        btnSave.setBackground(Color.GREEN);
+        btnSave.setBackground(Color.decode("#09548d"));
+        btnSave.setForeground(Color.WHITE);
 
         btnAddRecord.addActionListener(e -> drawWinaddRecord());
         btnRemoveRecord.addActionListener(e -> drawWinRemoveRecord());
@@ -766,7 +769,7 @@ class InventoryManagerApp {
             return;
         }
         drawPageTitle("Sales");
-        containerNavBar.getComponent(1).setBackground(Color.GREEN);
+        containerNavBar.getComponent(1).setBackground(Color.decode("#47D45A"));
         containerNavBar.getComponent(0).setBackground(Color.WHITE);
 
         updateInventoryTable();
@@ -774,7 +777,8 @@ class InventoryManagerApp {
 
         JButton btnAddSale = new JButton("Add Sale");
         btnAddSale.addActionListener(e -> drawWinAddSale());
-        btnAddSale.setBackground(Color.GREEN);
+        btnAddSale.setBackground(Color.decode("#09548d"));
+        btnAddSale.setForeground(Color.WHITE);
         btnAddSale.setBounds(350, 25, 200, 50);
 
         containerTableEdits.remove(1);
@@ -791,13 +795,14 @@ class InventoryManagerApp {
 
         drawPageTitle("Stock");
         containerNavBar.getComponent(1).setBackground(Color.WHITE);
-        containerNavBar.getComponent(0).setBackground(Color.GREEN);
+        containerNavBar.getComponent(0).setBackground(Color.decode("#47D45A"));
 
         updateSalesTable();
         drawInventoryRecords();
 
         JButton btnAddRecord = new JButton("Add Record");
-        btnAddRecord.setBackground(Color.GREEN);
+        btnAddRecord.setBackground(Color.decode("#09548d"));
+        btnAddRecord.setForeground(Color.WHITE);
         btnAddRecord.setBounds(350, 25, 200, 50);
 
         btnAddRecord.addActionListener(e -> drawWinaddRecord());
@@ -929,8 +934,6 @@ class InventoryManagerApp {
             // load the window for chart
             loadChartWin("Inventory Report", chartPath);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("already running?");
             JOptionPane.showMessageDialog(window, "Error generating inventory report. Could it be already running?");
         }
     }
@@ -941,7 +944,8 @@ class InventoryManagerApp {
         }
         else {
             updateInventoryTable();
-            drawSalesRecords();
+            saveRecords();
+            loadSalesPage();
         }
 
         try {
@@ -991,10 +995,10 @@ class InventoryManagerApp {
             // load the window for chart
             loadChartWin("Sales Report", chartPath);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("already running?");
             JOptionPane.showMessageDialog(window, "Error generating sales report. Could it be already running?");
         }
+
+
     }
 
     // creates a window with the image of the chart
@@ -1004,8 +1008,18 @@ class InventoryManagerApp {
         chartWindow.setSize(800,600);
         chartWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+        ImageIcon chartImage;
+
+        try {
+            BufferedImage bufferedImage = ImageIO.read(new File(imagePath));
+            chartImage = new ImageIcon(bufferedImage);
+        }
+        catch (IOException e) {
+            JOptionPane.showMessageDialog(window, "Error loading sales report chart image.");
+            return;
+        }
         // load the image from the file path and a label to hold the image
-        ImageIcon chartImage = new ImageIcon(imagePath);
+
         JLabel imageLabel = new JLabel(chartImage);
         imageLabel.setHorizontalAlignment(JLabel.CENTER);
         imageLabel.setVerticalAlignment(JLabel.CENTER);
