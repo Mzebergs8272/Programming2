@@ -2,7 +2,12 @@ package Programming2_CW2;
 
 import com.aspose.cells.ChartType;
 import org.json.JSONObject;
-
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
@@ -11,16 +16,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
 import java.util.*;
-import java.util.Map;
-
 
 
 class Main {
@@ -40,7 +36,6 @@ class LblAsterisk extends JLabel {
         this.setFont(new Font("Tahoma", Font.BOLD, 14));
     }
 }
-
 
 
 class InventoryManagerApp {
@@ -63,17 +58,24 @@ class InventoryManagerApp {
     public String[] salesColumnNames;
     public String[] inventoryColumnNames;
 
-
-
     InventoryManagerApp() {
+
+        // app definition and setup
         window = new JFrame(windowTitle);
         window.setLayout(new BorderLayout());
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // get screen width and height
         width = Toolkit.getDefaultToolkit().getScreenSize().width;
         height = Toolkit.getDefaultToolkit().getScreenSize().height;
+
         window.setSize(width, height - 50);
+
+        // stores easily accessible table records
         salesRecords = new HashMap<>();
         inventoryRecords = new HashMap<>();
+
+        // for swapping between sales and inventory tables
         salesColumnNames = new String[]{"Sale ID", "Product ID", "Customer ID", "Date", "Quantity", "Total Value"};
         inventoryColumnNames = new String[]{"Product ID", "Product Name", "Description", "Cost", "Quantity", "Total Value"};
 
@@ -81,19 +83,20 @@ class InventoryManagerApp {
 
 
     public void run() {
+        // draws all main components of the app
+        // default page is inventory page
         drawNavigation();
         drawTableEdits();
         drawTable();
         drawPageTitle("Stock");
-
         loadInventoryRecords();
         loadSalesRecords();
-
         loadInventoryPage();
 
         window.setVisible(true);
     }
 
+    // replaces current page title with chosen title
     void drawPageTitle(String title) {
         if (!(containerTableEdits.getComponent(0) instanceof JLabel)) {
             JLabel lblTitle = new JLabel(title);
@@ -106,6 +109,10 @@ class InventoryManagerApp {
         }
     }
 
+    // draws all buttons in the vetical navigation bar
+    // inventory page button
+    // sales page button
+    // sales and inventory report buttons
     void drawNavigation() {
         containerNavBar = new JPanel();
         containerNavBar.setPreferredSize(new Dimension(navBarWidth, height - 100));
@@ -124,6 +131,8 @@ class InventoryManagerApp {
         btnSalesReport.setPreferredSize(new Dimension(navBarWidth, 50));
         btnSalesReport.setBackground(Color.WHITE);
 
+        // short-hand lambda definition for the ActionListener interface with the default event method being actionPerformed
+        // in which the chosen function gets called.
         btnInventoryPage.addActionListener(e -> loadInventoryPage());
         btnSalesPage.addActionListener(e -> loadSalesPage());
         btnInventoryReport.addActionListener(e -> drawWinInventoryReport());
@@ -134,11 +143,15 @@ class InventoryManagerApp {
         containerNavBar.add(btnSalesReport);
         containerNavBar.add(btnInventoryReport);
 
+        // positions nav bar on the left side of the screen.
         window.add(containerNavBar, BorderLayout.WEST);
     }
 
+    // draws the top bar for editing the displayed table
+    // includes page title, add record, remove record, remove selected records, save all, and search table components
     void drawTableEdits() {
         containerTableEdits = new JPanel();
+        // absolute layout, all components positions are absolute.
         containerTableEdits.setLayout(null);
         containerTableEdits.setPreferredSize(new Dimension(window.getWidth(), 100));
         containerTableEdits.setBackground(Color.LIGHT_GRAY);
@@ -170,17 +183,22 @@ class InventoryManagerApp {
         btnRemoveSelectedRecords.addActionListener(e -> removeSelectedRecords());
         btnSave.addActionListener(e -> saveRecords());
 
+        // JTextfield doesnt seemingly support shorthand definitions for event listeners related to text input
+        // so this is the long defintion for the text input listener for table search component
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 searchTable(txtSearch.getText());
             }
+
             @Override
             public void removeUpdate(DocumentEvent e) {
                 searchTable(txtSearch.getText());
             }
+
             @Override
-            public void changedUpdate(DocumentEvent e) {}
+            public void changedUpdate(DocumentEvent e) {
+            }
 
         });
 
@@ -190,9 +208,12 @@ class InventoryManagerApp {
         containerTableEdits.add(lblSearch);
         containerTableEdits.add(btnRemoveSelectedRecords);
         containerTableEdits.add(btnSave);
+
+        // positions the table edit section at the top of the window.
         window.add(containerTableEdits, BorderLayout.NORTH);
     }
 
+    // draws a blank JTable with fixed size.
     void drawTable() {
         containerTable = new JPanel(new FlowLayout());
         containerTable.setPreferredSize(new Dimension(width - navBarWidth, height - 225));
@@ -204,42 +225,45 @@ class InventoryManagerApp {
         table.setRowHeight(30);
         table.setAutoCreateRowSorter(true);
 
+        // enables table vertical and horizontal scrolling
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setPreferredSize(new Dimension(1425, height - 225));
 
         containerTable.add(scrollPane);
 
+        // adds table in the remaining default slot of the window
         window.add(containerTable);
     }
 
+    // searches currently displayed table and displays any matching records
     void searchTable(String query) {
-        System.out.println("ewrgerg");
+
+        // checks what table is currently open and updates it to ensure a proper search.
         if (tableModel.getColumnName(0).equals("Product ID")) {
             drawInventoryRecords();
             updateInventoryTable();
 
-        }
-        else {
+        } else {
             drawSalesRecords();
             updateSalesTable();
         }
 
+        // if search is empty, draw the entire table
         if (query == null || query.isEmpty()) {
             if (tableModel.getColumnName(0).equals("Product ID")) {
                 drawInventoryRecords();
-            }
-            else drawSalesRecords();
+            } else drawSalesRecords();
 
             return;
         }
 
+        // iterates through displayed table and appends any matching records to a result ArrayList
         ArrayList<ArrayList<String>> result = new ArrayList<>();
         for (Vector<Object> record : tableModel.getDataVector()) {
             boolean match = false;
             ArrayList<String> resultRecord = new ArrayList<>();
             for (Object column : record) {
                 resultRecord.add(column.toString());
-                System.out.println(column + " " + query);
                 if (column.toString() != null && !column.toString().isEmpty() && column.toString().equalsIgnoreCase(query)) {
                     match = true;
                 }
@@ -247,6 +271,8 @@ class InventoryManagerApp {
             if (match) result.add(resultRecord);
         }
 
+        // if any matches were found, replace the current table records with new records
+        // otherwise, display no records
         if (!result.isEmpty()) {
 
             String[][] arrResult = new String[result.size()][result.getFirst().size()];
@@ -256,17 +282,13 @@ class InventoryManagerApp {
                 }
             }
             tableModel.setDataVector(arrResult, tableModel.getColumnName(0).equals("Product ID") ? inventoryColumnNames : salesColumnNames);
-        }
-        else {
+        } else {
             tableModel.setDataVector(new Object[][]{}, tableModel.getColumnName(0).equals("Product ID") ? inventoryColumnNames : salesColumnNames);
         }
     }
 
+    // draws a popup for adding an inventory record, with a grid bag layout
     void drawWinaddRecord() {
-        // creates modal window
-        // text fields to specify ID, Name, Description, Cost, Quantity, Total Value
-        // access tableModel to add row
-
         JFrame winAddRecord = new JFrame("Add Record");
 
         winAddRecord.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -282,6 +304,7 @@ class InventoryManagerApp {
         winAddRecord.setSize(new Dimension(450, 300));
         winAddRecord.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
+        // 5 by 5 grid
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
@@ -305,6 +328,7 @@ class InventoryManagerApp {
         JLabel lblAsterisk = new JLabel("*");
         lblAsterisk.setForeground(Color.RED);
 
+        // grid bag layout setup
         gbc.gridx = 0;
         gbc.gridy = 0;
         winAddRecord.add(lblProdName, gbc);
@@ -342,11 +366,11 @@ class InventoryManagerApp {
 
         winAddRecord.setVisible(true);
 
+        // validates that all required fields are filled and they're all in the correct format
         btnAddRecord.addActionListener(e -> {
             if (txtProdName.getText().isEmpty() || txtCost.getText().isEmpty() || txtQuantity.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Please fill all the fields");
-            }
-            else {
+                JOptionPane.showMessageDialog(null, "Please fill all the required fields");
+            } else {
                 try {
                     tableModel.addRow(new String[]{
                         String.valueOf(tableModel.getRowCount() + 1),
@@ -356,10 +380,9 @@ class InventoryManagerApp {
                         txtQuantity.getText(),
                         String.valueOf(Integer.parseInt(txtQuantity.getText()) * Float.parseFloat(txtCost.getText()))
                     });
-
+                    // confirmation message
                     JOptionPane.showMessageDialog(null, "Record added", "Success!", JOptionPane.PLAIN_MESSAGE);
-                }
-                catch (NumberFormatException formatException) {
+                } catch (NumberFormatException formatException) {
                     JOptionPane.showMessageDialog(null, "Quantity and cost must be numbers.", "Format Error!", JOptionPane.WARNING_MESSAGE);
                 }
             }
@@ -367,6 +390,7 @@ class InventoryManagerApp {
 
     }
 
+    // draws popup for removing records for any table, with a grid bag layout
     void drawWinRemoveRecord() {
         JFrame winRemoveRecord = new JFrame("Remove Record");
         winRemoveRecord.setLayout(new GridBagLayout());
@@ -376,8 +400,8 @@ class InventoryManagerApp {
 
         winRemoveRecord.addWindowListener(new WindowAdapter() {
             public void windowClosed(WindowEvent e) {
-            window.setEnabled(true);
-            window.toFront();
+                window.setEnabled(true);
+                window.toFront();
             }
         });
 
@@ -392,15 +416,21 @@ class InventoryManagerApp {
 
         JButton btnRemoveRecord = new JButton("Remove Records");
         btnRemoveRecord.addActionListener(e -> {
-            ArrayList<String> recordIDs = new ArrayList<>();
-            recordIDs.addAll(Arrays.asList(txtListRemove.getText().split("[, ]")));
+            ArrayList<String> recordIDs = new ArrayList<>(Arrays.asList(txtListRemove.getText().split("[, ]")));
 
+            // parses the range remove field and creates a list of all records with IDs within specified range
             if (txtRangeRemove.getText().matches("[0-9]-[0-9]")) {
                 String[] range = txtRangeRemove.getText().split("-");
                 for (int i = Math.min(Integer.parseInt(range[0]), Integer.parseInt(range[1]));
                      i <= Math.max(Integer.parseInt(range[0]), Integer.parseInt(range[1]));
                      i++) {
                     recordIDs.add(String.valueOf(i));
+                }
+            }
+            else {
+                if (!txtRangeRemove.getText().isEmpty()) {
+                    // draws popup to indicate the format for the specified range is wrong
+                    JOptionPane.showMessageDialog(null, "Specified range of records can't be parsed, use recommended format e.g., '1-5'", "Format error!", JOptionPane.WARNING_MESSAGE);
                 }
             }
             // iterates through all records IDs specified and removes corresponding records from tableModel
@@ -436,37 +466,47 @@ class InventoryManagerApp {
             JOptionPane.showMessageDialog(null, "Specified records deleted.", "Success!", JOptionPane.PLAIN_MESSAGE);
         });
 
-        gbc.gridx = 0; gbc.gridy = 0;
+        // grid bag layout setup
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         winRemoveRecord.add(lblRangeRemove, gbc);
 
-        gbc.gridx = 1; gbc.gridy = 0;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
         winRemoveRecord.add(txtRangeRemove, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         winRemoveRecord.add(lblListRemove, gbc);
 
-        gbc.gridx = 1; gbc.gridy = 1;
+        gbc.gridx = 1;
+        gbc.gridy = 1;
         winRemoveRecord.add(txtListRemove, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
         winRemoveRecord.add(btnRemoveRecord, gbc);
 
         winRemoveRecord.setVisible(true);
 
     }
 
+    // draws popup for adding a sale record, with a grid bag layout
     void drawWinAddSale() {
 
         JFrame winAddSale = new JFrame("Add Sale");
         winAddSale.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+        // re-enables the main window when this popup closes, to prevent event-based problems and errors
         winAddSale.addWindowListener(new WindowAdapter() {
             public void windowClosed(WindowEvent e) {
-                window.setEnabled(true);
-                window.toFront();
+            window.setEnabled(true);
+            window.toFront();
             }
         });
 
+        // disabled input for the main window
         window.setEnabled(false);
         winAddSale.setSize(new Dimension(450, 300));
         winAddSale.setLayout(new GridBagLayout());
@@ -476,6 +516,7 @@ class InventoryManagerApp {
 
         JComboBox<String> dropdown = new JComboBox<>();
         dropdown.setPreferredSize(new Dimension(250, 25));
+        // loads the dropdown menu, showing all inventory records
         for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
             String recordString =
                     "ID: " + record.getKey() +
@@ -497,6 +538,8 @@ class InventoryManagerApp {
         txtDate.setPreferredSize(new Dimension(225, 25));
 
         JButton btnAddSale = new JButton("Add Sale");
+
+        // grid bag layout setup
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -533,28 +576,33 @@ class InventoryManagerApp {
         gbc.anchor = GridBagConstraints.CENTER;
         winAddSale.add(btnAddSale, gbc);
 
-        //Button logic
+        // validation to ensure all fields are the correct type, to prevent the NumberFormatException when calculating the fields together
         btnAddSale.addActionListener(e -> {
             String selectedProductID = dropdown.getSelectedItem().toString().split(" ")[1];
 
             try {
+                // takes the cost and quantity of the selected inventory record and parses them into numbers
                 float prodCost = Float.parseFloat(inventoryRecords.get(selectedProductID).get("Cost"));
                 int prodQuantity = Integer.parseInt(inventoryRecords.get(selectedProductID).get("Quantity"));
 
                 try {
                     int selectedQuantity = Integer.parseInt(txtQuantity.getText());
 
+                    // ensures the selected stock record has enough quantity for chosen quantity
                     if (selectedQuantity <= prodQuantity && selectedQuantity > 0) {
                         if (txtDate.getText().matches("^[0-3]?[0-9]/[0-3]?[0-9]/(?:[0-9]{2})?[0-9]{2}$")) {
                             tableModel.insertRow(tableModel.getRowCount(), new String[]{
-                                    String.valueOf(tableModel.getRowCount() + 1),
-                                    selectedProductID, txtCustomerID.getText(),
-                                    txtDate.getText(), txtQuantity.getText(),
-                                    String.valueOf(prodCost * selectedQuantity)});
+                                String.valueOf(tableModel.getRowCount() + 1),
+                                selectedProductID, txtCustomerID.getText(),
+                                txtDate.getText(), txtQuantity.getText(),
+                                String.valueOf(prodCost * selectedQuantity)});
 
+                            // updates the inventory record by subtracting specified quantity and total value,
+                            // ensuring the sales influence the stock
                             inventoryRecords.get(selectedProductID).put("Quantity", String.valueOf(prodQuantity - selectedQuantity));
                             inventoryRecords.get(selectedProductID).put("Total Value", String.valueOf((prodQuantity - selectedQuantity) * prodCost));
 
+                            // refreshes the dropdown menu
                             dropdown.removeAllItems();
                             for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
                                 String recordString =
@@ -563,8 +611,10 @@ class InventoryManagerApp {
                                     " | Quantity: " + record.getValue().get("Quantity");
                                 dropdown.addItem(recordString);
                             }
+                            // updates sales records
                             updateSalesTable();
 
+                            // confirmation message
                             JOptionPane.showMessageDialog(null, "Successfully added sale.", "Success!", JOptionPane.PLAIN_MESSAGE);
 
                         } else {
@@ -572,16 +622,15 @@ class InventoryManagerApp {
 
                         }
                     } else if (selectedQuantity <= 0) {
+                        // selected quantity cannot be less than 1
                         JOptionPane.showMessageDialog(null, "Specified product quantity cannot be zero.", "Product quantity error!", JOptionPane.WARNING_MESSAGE);
 
                     } else {
                         JOptionPane.showMessageDialog(null, "Insufficient quantity of chosen product for specified quantity.", "Product quantity error!", JOptionPane.WARNING_MESSAGE);
                     }
+                } catch (NumberFormatException numFormatException) {
+                    JOptionPane.showMessageDialog(null, "Quantity must be an integer.", "Format error!", JOptionPane.WARNING_MESSAGE);
                 }
-                catch (NumberFormatException numFormatException) {
-                        JOptionPane.showMessageDialog(null, "Quantity must be an integer.", "Format error!", JOptionPane.WARNING_MESSAGE);
-                        System.out.println(numFormatException.getMessage());
-                    }
 
             } catch (NumberFormatException emptyFieldException) {
                 JOptionPane.showMessageDialog(null, "Specified product must have a cost and quantity.", "Format error!", JOptionPane.WARNING_MESSAGE);
@@ -592,7 +641,8 @@ class InventoryManagerApp {
         winAddSale.setVisible(true);
     }
 
-
+    // updates the inventoryRecords hashmap based on the records of currently displayed table
+    // inventory table must be displayed, to prevent overwriting records incorrectly
     void updateInventoryTable() {
         for (Vector<Object> record : tableModel.getDataVector()) {
             HashMap<String, String> details = new HashMap<>();
@@ -606,6 +656,8 @@ class InventoryManagerApp {
 
     }
 
+    // updates the inventoryRecords hashmap based on the records of currently displayed table
+    // sales table must be displayed, to prevent overwriting records incorrectly
     void updateSalesTable() {
         for (Vector<Object> record : tableModel.getDataVector()) {
 
@@ -621,74 +673,61 @@ class InventoryManagerApp {
         }
     }
 
+    // loads the salesRecords hashmap up with sales records from json
     void loadSalesRecords() {
         try {
+            // turns all content of JSON file into a string
             String content = new String(Files.readAllBytes(Paths.get("src/Programming2_CW2/SalesRecords.json")));
+
+            // parses the json string into a json object
             JSONObject json = new JSONObject(content);
 
-            String[][] data = new String[json.length()][6];
-            int i = 0;
+            // iterates through the keys of each record in json and put them into the salesRecords hashmap
             for (Object recordKey : json.keySet()) {
                 JSONObject record = (JSONObject) json.get((String) recordKey);
 
-                data[i][0] = (String) recordKey;
-                data[i][1] = record.get("Product ID").toString();
-                data[i][2] = record.get("Customer ID").toString();
-                data[i][3] = record.get("Date").toString();
-                data[i][4] = record.get("Quantity").toString();
-                data[i][5] = record.get("Total Value").toString();
-
                 salesRecords.put((String) recordKey, new HashMap<String, String>());
 
-                salesRecords.get(data[i][0]).put("Product ID", data[i][1]);
-                salesRecords.get(data[i][0]).put("Customer ID", data[i][2]);
-                salesRecords.get(data[i][0]).put("Date", data[i][3]);
-                salesRecords.get(data[i][0]).put("Quantity", data[i][4]);
-                salesRecords.get(data[i][0]).put("Total Value", data[i][5]);
+                salesRecords.get(recordKey).put("Product ID", record.get("Product ID").toString());
+                salesRecords.get(recordKey).put("Customer ID", record.get("Customer ID").toString());
+                salesRecords.get(recordKey).put("Date", record.get("Date").toString());
+                salesRecords.get(recordKey).put("Quantity", record.get("Quantity").toString());
+                salesRecords.get(recordKey).put("Total Value", record.get("Total Value").toString());
 
-                i++;
+
             }
 
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    // sames as loadSalesRecords but with inventoryRecords hashmap and json file
     void loadInventoryRecords() {
         try {
             String content = new String(Files.readAllBytes(Paths.get("src/Programming2_CW2/StockRecords.json")));
             JSONObject json = new JSONObject(content);
 
-            String[][] data = new String[json.length()][6];
-            int i = 0;
+
             for (Object recordKey : json.keySet()) {
                 JSONObject record = (JSONObject) json.get((String) recordKey);
 
-                data[i][0] = (String) recordKey;
-                data[i][1] = record.get("Product Name").toString();
-                data[i][2] = record.get("Description").toString();
-                data[i][3] = record.get("Cost").toString();
-                data[i][4] = record.get("Quantity").toString();
-                data[i][5] = record.get("Total Value").toString();
 
                 inventoryRecords.put((String) recordKey, new HashMap<String, String>());
 
-                inventoryRecords.get(data[i][0]).put("Product Name", data[i][1]);
-                inventoryRecords.get(data[i][0]).put("Description", data[i][2]);
-                inventoryRecords.get(data[i][0]).put("Cost", data[i][3]);
-                inventoryRecords.get(data[i][0]).put("Quantity", data[i][4]);
-                inventoryRecords.get(data[i][0]).put("Total Value", data[i][5]);
-
-                i++;
+                inventoryRecords.get(recordKey).put("Product Name", record.get("Product Name").toString());
+                inventoryRecords.get(recordKey).put("Description", record.get("Description").toString());
+                inventoryRecords.get(recordKey).put("Cost", record.get("Cost").toString());
+                inventoryRecords.get(recordKey).put("Quantity", record.get("Quantity").toString());
+                inventoryRecords.get(recordKey).put("Total Value", record.get("Total Value").toString());
 
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    // draws sales records from salesRecords hashmap into current displayed table
     void drawSalesRecords() {
 
         Object[][] resultTable = new Object[salesRecords.size()][6];
@@ -697,11 +736,11 @@ class InventoryManagerApp {
 
         for (Map.Entry<String, HashMap<String, String>> record : salesRecords.entrySet()) {
             resultTable[i][0] = Integer.parseInt(record.getKey());
-            resultTable[i][1] = record.getValue().get("Product ID").toString();
-            resultTable[i][2] = record.getValue().get("Customer ID").toString();
-            resultTable[i][3] = record.getValue().get("Date").toString();
-            resultTable[i][4] = record.getValue().get("Quantity").toString();
-            resultTable[i][5] = record.getValue().get("Total Value").toString();
+            resultTable[i][1] = record.getValue().get("Product ID");
+            resultTable[i][2] = record.getValue().get("Customer ID");
+            resultTable[i][3] = record.getValue().get("Date");
+            resultTable[i][4] = record.getValue().get("Quantity");
+            resultTable[i][5] = record.getValue().get("Total Value");
 
             i++;
         }
@@ -709,6 +748,7 @@ class InventoryManagerApp {
         tableModel.setDataVector(resultTable, salesColumnNames);
     }
 
+    // draws inventory records from inventoryRecords hashmap into current displayed table
     void drawInventoryRecords() {
         Object[][] resultTable = new Object[inventoryRecords.size()][6];
 
@@ -716,11 +756,11 @@ class InventoryManagerApp {
 
         for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
             resultTable[i][0] = Integer.parseInt(record.getKey());
-            resultTable[i][1] = record.getValue().get("Product Name").toString();
-            resultTable[i][2] = record.getValue().get("Description").toString();
-            resultTable[i][3] = record.getValue().get("Cost").toString();
-            resultTable[i][4] = record.getValue().get("Quantity").toString();
-            resultTable[i][5] = record.getValue().get("Total Value").toString();
+            resultTable[i][1] = record.getValue().get("Product Name");
+            resultTable[i][2] = record.getValue().get("Description");
+            resultTable[i][3] = record.getValue().get("Cost");
+            resultTable[i][4] = record.getValue().get("Quantity");
+            resultTable[i][5] = record.getValue().get("Total Value");
 
             i++;
         }
@@ -728,6 +768,7 @@ class InventoryManagerApp {
         tableModel.setDataVector(resultTable, inventoryColumnNames);
     }
 
+    // removes currently selected/highlighted records in the table
     void removeSelectedRecords() {
 
         while (table.getSelectedRows().length > 0) {
@@ -741,18 +782,17 @@ class InventoryManagerApp {
 
                 // replaces quantity and total value of sale onto product
                 inventoryRecords.get(dataVector.get(firstSelectedRecord).get(1).toString()).put(
-                    "Quantity",
-                    String.valueOf(Integer.parseInt(inventoryRecords.get(dataVector.get(firstSelectedRecord).get(1).toString()).get("Quantity")) + quantity)
+                        "Quantity",
+                        String.valueOf(Integer.parseInt(inventoryRecords.get(dataVector.get(firstSelectedRecord).get(1).toString()).get("Quantity")) + quantity)
                 );
 
                 inventoryRecords.get(dataVector.get(firstSelectedRecord).get(1).toString()).put(
-                    "Total Value",
-                    String.valueOf(Float.parseFloat(inventoryRecords.get(dataVector.get(firstSelectedRecord).get(1).toString()).get("Total Value")) + totalValue)
+                        "Total Value",
+                        String.valueOf(Float.parseFloat(inventoryRecords.get(dataVector.get(firstSelectedRecord).get(1).toString()).get("Total Value")) + totalValue)
                 );
 
                 salesRecords.remove(String.valueOf(dataVector.get(firstSelectedRecord).getFirst()));
-            }
-            else {
+            } else {
                 inventoryRecords.remove(String.valueOf(dataVector.get(firstSelectedRecord).getFirst()));
             }
 
@@ -786,6 +826,7 @@ class InventoryManagerApp {
         containerTableEdits.repaint();
 
     }
+
     // changes records list to inventory records from csv
     // changes display of buttons and nav bar
     void loadInventoryPage() {
@@ -811,17 +852,24 @@ class InventoryManagerApp {
         containerTableEdits.repaint();
     }
 
+    // correctly saves and opens both inventory and sales tables and saves them to json
+    // these records overwrite the json files.
     void saveRecords() {
+        // if current displayed table is inventory table:
+
         if (tableModel.getColumnName(0).equals("Product ID")) {
             try (FileWriter writer = new FileWriter("src/Programming2_CW2/StockRecords.json", false)) {
-
+                // update table records into inventoryRecords hashmap
                 updateInventoryTable();
 
+                // iterate through inventory records hashmap and append records to json object
                 JSONObject newInventoryRecords = new JSONObject();
                 for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
                     JSONObject details = new JSONObject(record.getValue());
                     newInventoryRecords.put(record.getKey(), details);
                 }
+
+                // overwrite any contents of json file with new inventory records
                 writer.write(newInventoryRecords.toString());
 
 
@@ -829,6 +877,7 @@ class InventoryManagerApp {
                 throw new RuntimeException(e);
             }
 
+            // the same process as above, but if the sales page is open instead
             try (FileWriter writer = new FileWriter("src/Programming2_CW2/SalesRecords.json", false)) {
 
                 JSONObject newSalesRecords = new JSONObject();
@@ -841,9 +890,12 @@ class InventoryManagerApp {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+
+            // redraws the inventory records
             drawInventoryRecords();
-        }
-        else {
+
+        } else {
+            // same process as above but starting with the sales page instead of the inventory page
             try (FileWriter writer = new FileWriter("src/Programming2_CW2/salesRecords.json", false)) {
                 updateSalesTable();
 
@@ -854,22 +906,18 @@ class InventoryManagerApp {
                 }
                 writer.write(newSalesRecords.toString());
 
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
             try (FileWriter writer = new FileWriter("src/Programming2_CW2/StockRecords.json", false)) {
                 JSONObject newInventoryRecords = new JSONObject();
-//                System.out.println(inventoryRecords.get("2").get("Quantity").toString());
                 for (Map.Entry<String, HashMap<String, String>> record : inventoryRecords.entrySet()) {
-                    System.out.println(record.getKey() + " " + record.getValue().get("Quantity").toString());
                     JSONObject details = new JSONObject(record.getValue());
                     newInventoryRecords.put(record.getKey(), details);
                 }
                 writer.write(newInventoryRecords.toString());
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
             drawSalesRecords();
@@ -880,8 +928,7 @@ class InventoryManagerApp {
     void drawWinInventoryReport() {
         if (tableModel.getColumnName(0).equals("Product ID")) {
             updateInventoryTable();
-        }
-        else {
+        } else {
             updateSalesTable();
             drawInventoryRecords();
         }
@@ -937,12 +984,12 @@ class InventoryManagerApp {
             JOptionPane.showMessageDialog(window, "Error generating inventory report. Could it be already running?");
         }
     }
+
     // draws window displaying graphs for sales
     void drawWinSalesReport() {
         if (tableModel.getColumnName(0).equals("Sale ID")) {
             updateSalesTable();
-        }
-        else {
+        } else {
             updateInventoryTable();
             saveRecords();
             loadSalesPage();
@@ -1005,7 +1052,7 @@ class InventoryManagerApp {
     void loadChartWin(String title, String imagePath) {
         // create a new jframe window with size
         JFrame chartWindow = new JFrame(title);
-        chartWindow.setSize(800,600);
+        chartWindow.setSize(800, 600);
         chartWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         ImageIcon chartImage;
@@ -1013,8 +1060,7 @@ class InventoryManagerApp {
         try {
             BufferedImage bufferedImage = ImageIO.read(new File(imagePath));
             chartImage = new ImageIcon(bufferedImage);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             JOptionPane.showMessageDialog(window, "Error loading sales report chart image.");
             return;
         }
